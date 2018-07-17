@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "276481458342",
+    "firebase_url": "https://appproj-ff5b6.firebaseio.com",
+    "project_id": "appproj-ff5b6",
+    "storage_bucket": "appproj-ff5b6.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:276481458342:android:4da95134c6c16fb5",
+        "android_client_info": {
+          "package_name": "com.example.alesha.percomsg"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "276481458342-tjmjlbcj81bp3gmpq00rjpdou8d5e07l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkeYYvqejOZzr6BJMuHhIEfpvX5wv2PPE"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
