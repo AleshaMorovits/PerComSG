@@ -11,12 +11,16 @@
         android:id="@+id/field_email"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"/>
+        android:layout_weight="1"
+        android:text="tester@test.com" />
+
     <EditText
         android:id="@+id/field_password"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"/>
+        android:layout_weight="1"
+        android:password="true"
+        android:text="Testing12" />
     <Button
         android:text="Sign In and Get Band Consent"
         android:id="@+id/emailSignInBtn"

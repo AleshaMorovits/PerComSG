@@ -62,7 +62,7 @@ public class UserProfile extends AppCompatActivity {
         @Override
         public void onBandHeartRateChanged(BandHeartRateEvent bandHeartRateEvent) {
             if(bandHeartRateEvent !=null){
-                appenToUI(String.format("Heart Rate = %d beats per minute\n"+"Quality = %s\n", bandHeartRateEvent.getHeartRate(),bandHeartRateEvent.getQuality()));
+                //appenToUI(String.format("Heart Rate = %d beats per minute\n"+"Quality = %s\n", bandHeartRateEvent.getHeartRate(),bandHeartRateEvent.getQuality()));
             }
         }
     };
@@ -84,10 +84,10 @@ public class UserProfile extends AppCompatActivity {
         // Write a message to the database
         mDatabase = FirebaseDatabase.getInstance().getReference();
 
-        new HeartRateConsentTask().execute(reference);
+
+
+
         new HeartRateSubscriptionTask().execute();
-
-
         //automatically crashes at this line
         new AccelerometerSubscriptionTask().execute();
 
@@ -122,31 +122,7 @@ public class UserProfile extends AppCompatActivity {
             }
         });
     }
-    //Get consent of sensor data
-    private class HeartRateConsentTask extends AsyncTask<WeakReference<Activity>,Void,Void>
-    {
-        @Override
-        protected Void doInBackground(WeakReference<Activity>...params){
-            try{
-                if(getConnectedBandClient()){
-                    if(params[0].get() !=null){
-                        client.getSensorManager().requestHeartRateConsent(params[0].get(), new HeartRateConsentListener() {
-                            @Override
-                            public void userAccepted(boolean b) {
-                            }
-                        });
-                    }else{
-                        Toast.makeText(UserProfile.this, "Band not connected",
-                                Toast.LENGTH_SHORT).show();
-                    }
-                }
-            }catch (Exception e){
-                Toast.makeText(UserProfile.this, e.getMessage(),
-                        Toast.LENGTH_SHORT).show();
-            }
-            return null;
-        }
-    }
+
 
 
     private class HeartRateSubscriptionTask extends AsyncTask<Void, Void, Void>{
@@ -205,7 +181,7 @@ public class UserProfile extends AppCompatActivity {
             }
             else
             {
-                Toast.makeText(getApplicationContext(),"Band isn't connected. Please make sure bluetooth is on and the band is in range.", Toast.LENGTH_LONG).show();
+                //Toast.makeText(getApplicationContext(),"Band isn't connected. Please make sure bluetooth is on and the band is in range.", Toast.LENGTH_LONG).show();
             }
         }
     };
@@ -216,10 +192,10 @@ public class UserProfile extends AppCompatActivity {
             try {
 
                 if (getConnectedBandClient()) {
-                    Toast.makeText(getApplicationContext(),"Band is connected.", Toast.LENGTH_LONG).show();
+                    //Toast.makeText(getApplicationContext(),"Band is connected.", Toast.LENGTH_LONG).show();
                     client.getSensorManager().registerAccelerometerEventListener(mAccelerometerEventListener, SampleRate.MS16);
                 } else {
-                    Toast.makeText(getApplicationContext(),"Band isn't connected. Please make sure bluetooth is on and the band is in range.", Toast.LENGTH_LONG).show();
+                    //Toast.makeText(getApplicationContext(),"Band isn't connected. Please make sure bluetooth is on and the band is in range.", Toast.LENGTH_LONG).show();
                 }
             } catch (BandException e) {
                 String exceptionMessage = "";

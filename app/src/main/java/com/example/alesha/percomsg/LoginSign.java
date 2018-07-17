@@ -1,6 +1,7 @@
 package com.example.alesha.percomsg;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
@@ -74,37 +75,9 @@ public class LoginSign extends AppCompatActivity {
         signInBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(LoginSign.this, "Email: "+mEmailField.getText().toString()+" Password: "+ mPasswordField.getText().toString(),
-                        Toast.LENGTH_SHORT).show();
+                new HeartRateConsentTask().execute(reference);
 
-                mAuth.signInWithEmailAndPassword(mEmailField.getText().toString(), mPasswordField.getText().toString())
-                        .addOnCompleteListener(LoginSign.this, new OnCompleteListener<AuthResult>() {
-                            @Override
-                            public void onComplete(@NonNull Task<AuthResult> task) {
 
-                                if (task.isSuccessful()) {
-                                    // Sign in success, update UI with the signed-in user's information
-                                    Log.d(TAG, "signInWithEmail:success");
-                                    FirebaseUser user = mAuth.getCurrentUser();
-                                    if (user != null) {
-                                        String uid = user.getUid();
-                                        Toast.makeText(LoginSign.this, "UID: " + uid,
-                                                Toast.LENGTH_SHORT).show();
-                                    }
-                                    Toast.makeText(LoginSign.this, "Authentication good.",
-                                            Toast.LENGTH_SHORT).show();
-                                    //updateUI(user);
-                                    Intent i = new Intent(LoginSign.this, UserProfile.class);
-                                    startActivity(i);
-                                } else {
-                                    // If sign in fails, display a message to the user.
-                                    Log.w(TAG, "signInWithEmail:failure", task.getException());
-                                    Toast.makeText(LoginSign.this, "Authentication failed.",
-                                            Toast.LENGTH_SHORT).show();
-                                    //updateUI(null);
-                                }
-                            }
-                        });
             }
         });
         signUpBtn.setOnClickListener(new View.OnClickListener() {
@@ -121,6 +94,100 @@ public class LoginSign extends AppCompatActivity {
         // Check if user is signed in (non-null) and update UI accordingly.
         FirebaseUser currentUser = mAuth.getCurrentUser();
         //updateUI(currentUser);
+    }
+
+    private boolean getConnectedBandClient() throws InterruptedException, BandException {
+        if (client == null) {
+            //Find paired Bands
+            BandInfo[] devices = BandClientManager.getInstance().getPairedBands();
+            if (devices.length == 0) {
+
+                return false;
+            }
+
+            client = BandClientManager.getInstance().create(getBaseContext(), devices[0]);
+        } else if (ConnectionState.CONNECTED == client.getConnectionState()) {
+            return true;
+        }
+
+        return ConnectionState.CONNECTED == client.connect().await();
+    }
+
+    private class HeartRateConsentTask extends AsyncTask<WeakReference<Activity>, Void, Void> {
+        @Override
+        protected Void doInBackground(WeakReference<Activity>... params) {
+
+            try {
+
+                if (getConnectedBandClient()) {
+
+                    if (params[0].get() != null) {
+                        client.getSensorManager().requestHeartRateConsent(params[0].get(), new HeartRateConsentListener() {
+                            @Override
+                            public void userAccepted(boolean consentGiven) {
+                                if(consentGiven== true){
+
+                                    Toast.makeText(LoginSign.this, "Email: "+mEmailField.getText().toString()+" Password: "+ mPasswordField.getText().toString(),
+                                            Toast.LENGTH_SHORT).show();
+
+                                    mAuth.signInWithEmailAndPassword(mEmailField.getText().toString(), mPasswordField.getText().toString())
+                                            .addOnCompleteListener(LoginSign.this, new OnCompleteListener<AuthResult>() {
+                                                @Override
+                                                public void onComplete(@NonNull Task<AuthResult> task) {
+
+                                                    if (task.isSuccessful()) {
+                                                        // Sign in success, update UI with the signed-in user's information
+                                                        Log.d(TAG, "signInWithEmail:success");
+                                                        FirebaseUser user = mAuth.getCurrentUser();
+                                                        if (user != null) {
+                                                            String uid = user.getUid();
+                                                            Toast.makeText(LoginSign.this, "UID: " + uid,
+                                                                    Toast.LENGTH_SHORT).show();
+                                                        }
+                                                        Toast.makeText(LoginSign.this, "Authentication good.",
+                                                                Toast.LENGTH_SHORT).show();
+                                                        //updateUI(user);
+                                                        Intent i = new Intent(LoginSign.this, UserProfile.class);
+                                                        startActivity(i);
+                                                        finish();
+                                                    } else {
+                                                        // If sign in fails, display a message to the user.
+                                                        Log.w(TAG, "signInWithEmail:failure", task.getException());
+                                                        Toast.makeText(LoginSign.this, "Authentication failed.",
+                                                                Toast.LENGTH_SHORT).show();
+                                                        //updateUI(null);
+                                                    }
+                                                }
+                                            });
+                                }
+                                else {
+                                    Toast.makeText(LoginSign.this, "Consent is Needed", Toast.LENGTH_LONG).show();
+
+                                }
+                            }
+                        });
+                    }
+                } else  {
+                }
+            } catch (BandException e) {
+                String exceptionMessage = "";
+                switch (e.getErrorType()) {
+                    case UNSUPPORTED_SDK_VERSION_ERROR:
+                        exceptionMessage = "Microsoft Health BandService doesn't support your SDK Version. Please update to latest SDK.\n";
+                        break;
+                    case SERVICE_ERROR:
+                        exceptionMessage = "Microsoft Health BandService is not available. Please make sure Microsoft Health is installed and that you have the correct permissions.\n";
+                        break;
+                    default:
+                        exceptionMessage = "Unknown error occured: " + e.getMessage() + "\n";
+                        break;
+                }
+                //Toast.makeText(getApplicationContext(),exceptionMessage, Toast.LENGTH_LONG).show();
+            } catch (Exception e) {
+
+            }
+            return null;
+        }
     }
 }
 
