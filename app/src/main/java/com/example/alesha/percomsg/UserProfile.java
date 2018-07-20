@@ -5,15 +5,16 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
-import android.os.PowerManager;
-import android.os.StrictMode;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,7 +38,6 @@ import com.microsoft.band.sensors.BandAccelerometerEvent;
 import com.microsoft.band.sensors.BandAccelerometerEventListener;
 import com.microsoft.band.sensors.BandHeartRateEvent;
 import com.microsoft.band.sensors.BandHeartRateEventListener;
-import com.microsoft.band.sensors.HeartRateConsentListener;
 import com.microsoft.band.sensors.SampleRate;
 
 import java.lang.ref.WeakReference;
@@ -48,24 +48,24 @@ import java.lang.ref.WeakReference;
 public class UserProfile extends AppCompatActivity {
     private FirebaseAuth mAuth;
     private FirebaseUser user;
-    private TextView firstTv,lastTv,bioTv,hobbyTv,textX,txtStatus;
+    private TextView firstTv,lastTv,bioTv,hobbyTv,chainTv,gestureTv;
     private Button editProfileBtn;
     private DatabaseReference mDatabase;
-    private String TAG = "UserProfile";
+   // private String TAG = "UserProfile";
     private BandClient client = null;
-    final WeakReference<Activity> reference = new WeakReference<Activity>(this);
-
+    private static final String TAG = "BroadcastTest";
+    private Intent intent;
 
     //private UserData user;
 
-    private BandHeartRateEventListener mHeartRateEventListener = new BandHeartRateEventListener() {
+  /*  private BandHeartRateEventListener mHeartRateEventListener = new BandHeartRateEventListener() {
         @Override
         public void onBandHeartRateChanged(BandHeartRateEvent bandHeartRateEvent) {
             if(bandHeartRateEvent !=null){
                 //appenToUI(String.format("Heart Rate = %d beats per minute\n"+"Quality = %s\n", bandHeartRateEvent.getHeartRate(),bandHeartRateEvent.getQuality()));
             }
         }
-    };
+    };*/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,23 +76,15 @@ public class UserProfile extends AppCompatActivity {
         bioTv = (TextView)findViewById(R.id.bioTv);
         hobbyTv = (TextView) findViewById(R.id.hobbyTv);
         editProfileBtn = (Button) findViewById(R.id.editProfileBtn);
-        txtStatus = (TextView)findViewById(R.id.txtStatus);
+        gestureTv = (TextView)findViewById(R.id.gestureTv);
 
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
 
+        intent = new Intent(this, BandComm.class);
+
         // Write a message to the database
         mDatabase = FirebaseDatabase.getInstance().getReference();
-
-
-
-
-        new HeartRateSubscriptionTask().execute();
-        //automatically crashes at this line
-        new AccelerometerSubscriptionTask().execute();
-
-
-
         if (user != null) {
             ValueEventListener postListener = new ValueEventListener() {
                 @Override
@@ -105,6 +97,8 @@ public class UserProfile extends AppCompatActivity {
                         bioTv.setText(data.getBio());
                         hobbyTv.setText(data.getHobbyArr().toString());
                     }
+
+
                 }
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
@@ -113,7 +107,9 @@ public class UserProfile extends AppCompatActivity {
                 }
             };
             mDatabase.child("data").child(user.getUid().toString()).addListenerForSingleValueEvent(postListener);
+
         };
+
         editProfileBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -121,11 +117,44 @@ public class UserProfile extends AppCompatActivity {
                 startActivity(i);
             }
         });
+       Intent intent = new Intent(this, BandComm.class);
+        startService(intent);
+
+    }
+
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            updateUI(intent);
+        }
+    };
+    @Override
+    public void onResume() {
+        super.onResume();
+        startService(intent);
+        registerReceiver(broadcastReceiver, new IntentFilter(BandComm.BROADCAST_ACTION));
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        unregisterReceiver(broadcastReceiver);
+        stopService(intent);
+    }
+    private void updateUI(Intent intent) {
+        String gesture = intent.getStringExtra("gesture");
+        String chain = intent.getStringExtra("chain");
+        Log.d(TAG, gesture);
+        Log.d(TAG, chain);
+
+        TextView gestureTv = (TextView) findViewById(R.id.gestureTv);
+        TextView chainTv = (TextView) findViewById(R.id.chainTv);
+        gestureTv.setText(gesture);
+        chainTv.setText(chain);
     }
 
 
-
-    private class HeartRateSubscriptionTask extends AsyncTask<Void, Void, Void>{
+   /* private class HeartRateSubscriptionTask extends AsyncTask<Void, Void, Void>{
         @Override
         protected Void doInBackground(Void... params){
             try{
@@ -217,19 +246,9 @@ public class UserProfile extends AppCompatActivity {
             return null;
         }
     }
+*/
 
 
-    @Override
-    public void onDestroy() {
-        try {
-            client.getSensorManager().unregisterAccelerometerEventListener(mAccelerometerEventListener);
-
-        } catch (BandIOException e) {
-            e.printStackTrace();
-        }
-        super.onDestroy();
-
-    }
 
 
 

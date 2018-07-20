@@ -17,12 +17,9 @@ public class UserData {
         private String first_name, last_name, bio;
         private ArrayList<String> hobbyArr;
 
-        public UserData(){
-
+        public UserData()
+        {
         }
-
-
-
     public UserData(String fn, String ln, String b, ArrayList<String> arr){
         bio = b;
         first_name = fn;

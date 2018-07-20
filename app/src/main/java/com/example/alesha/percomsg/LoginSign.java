@@ -1,10 +1,19 @@
 package com.example.alesha.percomsg;
 
+import android.app.ActivityManager;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Environment;
+import android.os.IBinder;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -36,6 +45,7 @@ import com.microsoft.band.sensors.BandHeartRateEvent;
 import com.microsoft.band.sensors.BandHeartRateEventListener;
 import com.microsoft.band.sensors.HeartRateConsentListener;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -47,6 +57,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.microsoft.band.sensors.SampleRate;
 
+import weka.core.Attribute;
+import weka.core.FastVector;
+
 public class LoginSign extends AppCompatActivity {
 
     private String TAG = "LOGIN";
@@ -55,6 +68,14 @@ public class LoginSign extends AppCompatActivity {
     private EditText mPasswordField;
     private Button signInBtn, signUpBtn;
     private BandClient client = null;
+    private File theFile;
+    private File theFile2;
+    private FastVector fvWekaAttributes;
+    private int num_features = 60;
+    private int window_size = 128;
+    private int num_data = 181;
+    private int num_classes = 13;
+    private boolean flag;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,16 +91,32 @@ public class LoginSign extends AppCompatActivity {
         signInBtn = (Button) findViewById(R.id.emailSignInBtn);
         signUpBtn = (Button) findViewById(R.id.emailSignUpBtn);
 
+        /*theFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + File.separator + "models");
+        theFile2 = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + File.separator + "models/logreg.model");
+*/
+
         mAuth = FirebaseAuth.getInstance();
 
-        signInBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new HeartRateConsentTask().execute(reference);
+
+        signInBtn.setOnClickListener(new View.OnClickListener()
+      {
+         @Override
+         public void onClick(View view) {
+             //generate model
+             //then start reporting gestures
+             Toast.makeText(LoginSign.this, "Generating model... This may take up to 3 minutes...", Toast.LENGTH_LONG).show();
 
 
-            }
-        });
+
+           new HeartRateConsentTask().execute(reference);
+
+
+
+
+
+       }
+      });
+
         signUpBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -87,7 +124,46 @@ public class LoginSign extends AppCompatActivity {
                 startActivity(i);
             }
         });
+
+
 }
+public void login(){
+
+    Toast.makeText(LoginSign.this, "Email: "+mEmailField.getText().toString()+" Password: "+ mPasswordField.getText().toString(),
+            Toast.LENGTH_SHORT).show();
+    mAuth.signInWithEmailAndPassword(mEmailField.getText().toString(), mPasswordField.getText().toString())
+            .addOnCompleteListener(LoginSign.this, new OnCompleteListener<AuthResult>() {
+                @Override
+                public void onComplete(@NonNull Task<AuthResult> task) {
+
+                    if (task.isSuccessful()) {
+                        // Sign in success, update UI with the signed-in user's information
+                        Log.d(TAG, "signInWithEmail:success");
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            String uid = user.getUid();
+                            Toast.makeText(LoginSign.this, "UID: " + uid,
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                        //    Toast.makeText(LoginSign.this, "Authentication good.",
+                        //   Toast.LENGTH_SHORT).show();
+                        //updateUI(user);
+                        Intent i = new Intent(LoginSign.this, UserProfile.class);
+                        startActivity(i);
+                        finish();
+                    } else {
+                        // If sign in fails, display a message to the user.
+                        Log.w(TAG, "signInWithEmail:failure", task.getException());
+                        //   Toast.makeText(LoginSign.this, "Authentication failed.",
+                        //          Toast.LENGTH_SHORT).show();
+                        //updateUI(null);
+                    }
+                }
+            });
+
+}
+
+
     @Override
     public void onStart() {
         super.onStart();
@@ -116,7 +192,6 @@ public class LoginSign extends AppCompatActivity {
     private class HeartRateConsentTask extends AsyncTask<WeakReference<Activity>, Void, Void> {
         @Override
         protected Void doInBackground(WeakReference<Activity>... params) {
-
             try {
 
                 if (getConnectedBandClient()) {
@@ -127,42 +202,11 @@ public class LoginSign extends AppCompatActivity {
                             public void userAccepted(boolean consentGiven) {
                                 if(consentGiven== true){
 
-                                    Toast.makeText(LoginSign.this, "Email: "+mEmailField.getText().toString()+" Password: "+ mPasswordField.getText().toString(),
-                                            Toast.LENGTH_SHORT).show();
-
-                                    mAuth.signInWithEmailAndPassword(mEmailField.getText().toString(), mPasswordField.getText().toString())
-                                            .addOnCompleteListener(LoginSign.this, new OnCompleteListener<AuthResult>() {
-                                                @Override
-                                                public void onComplete(@NonNull Task<AuthResult> task) {
-
-                                                    if (task.isSuccessful()) {
-                                                        // Sign in success, update UI with the signed-in user's information
-                                                        Log.d(TAG, "signInWithEmail:success");
-                                                        FirebaseUser user = mAuth.getCurrentUser();
-                                                        if (user != null) {
-                                                            String uid = user.getUid();
-                                                            Toast.makeText(LoginSign.this, "UID: " + uid,
-                                                                    Toast.LENGTH_SHORT).show();
-                                                        }
-                                                        Toast.makeText(LoginSign.this, "Authentication good.",
-                                                                Toast.LENGTH_SHORT).show();
-                                                        //updateUI(user);
-                                                        Intent i = new Intent(LoginSign.this, UserProfile.class);
-                                                        startActivity(i);
-                                                        finish();
-                                                    } else {
-                                                        // If sign in fails, display a message to the user.
-                                                        Log.w(TAG, "signInWithEmail:failure", task.getException());
-                                                        Toast.makeText(LoginSign.this, "Authentication failed.",
-                                                                Toast.LENGTH_SHORT).show();
-                                                        //updateUI(null);
-                                                    }
-                                                }
-                                            });
+                                    Toast.makeText(LoginSign.this, "Your band consent has been approved", Toast.LENGTH_LONG).show();
+                                   login();
                                 }
                                 else {
-                                    Toast.makeText(LoginSign.this, "Consent is Needed", Toast.LENGTH_LONG).show();
-
+                                   Toast.makeText(LoginSign.this, "Consent is Needed", Toast.LENGTH_LONG).show();
                                 }
                             }
                         });
@@ -184,7 +228,6 @@ public class LoginSign extends AppCompatActivity {
                 }
                 //Toast.makeText(getApplicationContext(),exceptionMessage, Toast.LENGTH_LONG).show();
             } catch (Exception e) {
-
             }
             return null;
         }

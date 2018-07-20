@@ -39,7 +39,14 @@
         android:textSize="32dp"/>
 
     <TextView
-        android:id="@+id/txtStatus"
+        android:id="@+id/gestureTv"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textSize="32dp" />
+
+    <TextView
+        android:id="@+id/chainTv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
